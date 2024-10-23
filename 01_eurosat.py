@@ -191,11 +191,11 @@ def plot_mosaic(image_grid, filename='neighbors.png'):
 if __name__ == "__main__":
     # read dataset.
     # FIXME: replace BASE directory if needed
-    imgs, y = read_eurosat('./../../Exercise/EuroSAT_RGB/EuroSAT_RGB', 100)
+    imgs, y = read_eurosat('2750', 100)
     print('Read EUROSAT dataset with %d samples (images).' % len(imgs))
 
     # FIXME (Sheet 01): inspect the classes + average images of the dataset
-    print(dir for number in 9 for dir in CLASSES )
+    print([(value, np.count_nonzero(y==key)) for key, value in CLASSES.items()])
 
     # FIXME (Sheet 02): split training+test data
 
