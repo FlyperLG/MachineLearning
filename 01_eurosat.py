@@ -194,8 +194,10 @@ if __name__ == "__main__":
     imgs, y = read_eurosat('2750', 100)
     print('Read EUROSAT dataset with %d samples (images).' % len(imgs))
 
+    print("\n")
+
     # FIXME (Sheet 01): inspect the classes + average images of the dataset
-    print([(value, np.count_nonzero(y==key)) for key, value in CLASSES.items()])
+    [print(f"{name}: {amount}") for name, amount in [(value, np.count_nonzero(y==key)) for key, value in CLASSES.items()]]
 
     # FIXME (Sheet 02): split training+test data
 
