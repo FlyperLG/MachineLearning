@@ -187,11 +187,33 @@ def plot_mosaic(image_grid, filename='neighbors.png'):
     Image.fromarray(mosaic).save(filename)
 
 
+def calculate_avg(imgs, categories):
+    pos = [[imgs[index] for index, elem in enumerate(categories) if elem == key] for key in CLASSES.keys()]
+
+
+    res = np.mean([pos[0][i] for i in range(0,200)], axis=0)
+    print(res)
+    print(res.shape)
+
+    #pos[0] # N* 200 * 64 * 64 * 3
+    #arr = np.stack(pos[0])
+    #print(arr)
+    #for cls 
+    #for cls in CLASSES.keys():
+    #    np.zeros((64,64,3),np.float)
+    #    for imgPos in pos[cls]:
+    #        img = imgs[imgPos]
+    #        for row in img:
+    #            for rgb in row:
+
+
+
+
 # main program
 if __name__ == "__main__":
     # read dataset.
     # FIXME: replace BASE directory if needed
-    imgs, y = read_eurosat('EuroSAT_RGB', 100)
+    imgs, y = read_eurosat('EuroSAT_RGB', 200)
     print('Read EUROSAT dataset with %d samples (images).' % len(imgs))
 
     print("\n")
@@ -199,6 +221,7 @@ if __name__ == "__main__":
     # FIXME (Sheet 01): inspect the classes + average images of the dataset
     [print(f"{name}: {amount}") for name, amount in [(value, np.count_nonzero(y==key)) for key, value in CLASSES.items()]]
 
+    calculate_avg(imgs, y)
     # FIXME (Sheet 02): split training+test data
 
     # FIXME (Sheet 02): train the classifier
