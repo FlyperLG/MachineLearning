@@ -191,7 +191,7 @@ def plot_mosaic(image_grid, filename='neighbors.png'):
 if __name__ == "__main__":
     # read dataset.
     # FIXME: replace BASE directory if needed
-    imgs, y = read_eurosat('2750', 100)
+    imgs, y = read_eurosat('EuroSAT_RGB', 100)
     print('Read EUROSAT dataset with %d samples (images).' % len(imgs))
 
     print("\n")
