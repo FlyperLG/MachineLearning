@@ -190,23 +190,16 @@ def plot_mosaic(image_grid, filename='neighbors.png'):
 def calculate_avg(imgs, categories):
     pos = [[imgs[index] for index, elem in enumerate(categories) if elem == key] for key in CLASSES.keys()]
 
+    for cls in CLASSES.keys():
+        avg = np.mean([pos[cls][i] for i in range(0,200)], axis=0)
+        avg=np.array(np.round(avg),dtype=np.uint8)
+        outAvg=Image.fromarray(avg,mode="RGB")
+        outAvg.save(f"Output/Average_{CLASSES[cls]}.png")
 
-    res = np.mean([pos[0][i] for i in range(0,200)], axis=0)
-    print(res)
-    print(res.shape)
-
-    #pos[0] # N* 200 * 64 * 64 * 3
-    #arr = np.stack(pos[0])
-    #print(arr)
-    #for cls 
-    #for cls in CLASSES.keys():
-    #    np.zeros((64,64,3),np.float)
-    #    for imgPos in pos[cls]:
-    #        img = imgs[imgPos]
-    #        for row in img:
-    #            for rgb in row:
-
-
+        std = np.std([pos[cls][i] for i in range(0,200)], axis=0)
+        std=np.array(np.round(std),dtype=np.uint8)
+        outStd=Image.fromarray(std,mode="RGB")
+        outStd.save(f"Output/StandardAviation_{CLASSES[cls]}.png")
 
 
 # main program
