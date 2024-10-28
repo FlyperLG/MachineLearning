@@ -191,12 +191,12 @@ def calculate_avg(imgs, categories):
     pos = [[imgs[index] for index, elem in enumerate(categories) if elem == key] for key in CLASSES.keys()]
 
     for cls in CLASSES.keys():
-        avg = np.mean([pos[cls][i] for i in range(0,200)], axis=0)
+        avg = np.mean([pos[cls][i] for i in range(0, len(pos[cls]) - 1)], axis=0)
         avg=np.array(np.round(avg),dtype=np.uint8)
         outAvg=Image.fromarray(avg,mode="RGB")
         outAvg.save(f"Output/Average_{CLASSES[cls]}.png")
 
-        std = np.std([pos[cls][i] for i in range(0,200)], axis=0)
+        std = np.std([pos[cls][i] for i in range(0, len(pos[cls]) - 1)], axis=0)
         std=np.array(np.round(std),dtype=np.uint8)
         outStd=Image.fromarray(std,mode="RGB")
         outStd.save(f"Output/StandardAviation_{CLASSES[cls]}.png")
