@@ -188,7 +188,7 @@ def plot_mosaic(image_grid, filename='neighbors.png'):
 
 
 def calculate_avg(imgs, categories):
-    pos = [[imgs[index] for index, elem in enumerate(categories) if elem == key] for key in CLASSES.keys()]
+    pos = [imgs[categories == key] for key in CLASSES.keys()]
 
     for cls in CLASSES.keys():
         avg = np.mean([pos[cls][i] for i in range(0, len(pos[cls]) - 1)], axis=0)
