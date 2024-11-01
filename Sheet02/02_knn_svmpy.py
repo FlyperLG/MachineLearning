@@ -3,6 +3,7 @@ import os
 from PIL import Image
 import numpy as np
 import random
+from annoy import AnnoyIndex
 
 
 # The classes (= types of landscape) in the EUROSAT dataset.
@@ -155,15 +156,66 @@ def accuracy(y, ypred):
     '''
     return np.mean(y == ypred)
 
+class KNNClassifier(Classifier):
+    trainedModel = []
 
+    def fit(self, X, y):
+        '''
+        train the classifier and store the trained model as an attribute.
+
+        @type X: np.array (N x D, dtype=float)
+        @param X: the feature vectors to train on,
+                  each D-dimensional.
+
+        @type y: np.array (N, dtype=int)
+        @param y: the class labels.
+        '''
+        self.trainedModel = list(zip(X, y))
+
+        tree = AnnoyIndex(len(X[0]), 'manhattan')
+        for i in range(0, len(self.trainedModel)):
+            v = X[i]
+            tree.add_item(i, v)
+        tree.build(10)
+        tree.save('knn.ann')
+
+        #distances = [[np.sum(abs(img1 - img2)) for img2 in X] for img1 in X]
+        #print(distances)
+        #sortedDistances = sorted(distances)
+        #distance = np.sum(abs(X[0] - X[0]))
+        #print(sortedDistances)
+
+
+
+
+    def predict(self, x, n = 50):
+        '''
+        apply the classifier to a new object.
+
+        @type x: np.array (D, dtype=float)
+        @param x: the feature vector to classify.
+
+        @rtype: int
+        @return: returns the predicted class.
+        '''
+        u = AnnoyIndex(len(x), 'manhattan')
+        u.load('knn.ann') # super fast, will just mmap the file
+        neighbours = u.get_nns_by_vector(x, n)
+
+        #distances = sorted([(np.sum(abs(x - z[0])), z[1]) for z in self.trainedModel])
+        unique, counts = np.unique([self.trainedModel[n][1] for n in neighbours], return_counts=True)
+        result = sorted(zip(counts, unique), reverse=True)
+        return result[0][1]
+        
 
 # main program
 if __name__ == "__main__":
 
     # read dataset.
-    imgs,y = read_eurosat('2750', 1000)
+    imgs,y = read_eurosat('Sheet01/EuroSAT_RGB', 1000)
     print('Read EUROSAT dataset with %d samples (images).' %len(imgs))
 
+    # FIXME (Sheet 02): split training+test data
     imgs_train, imgs_valid, imgs_test, ytrain, yvalid, ytest = splits(imgs, y)
 
     Xtrain = feature_extraction(imgs_train)
@@ -171,3 +223,14 @@ if __name__ == "__main__":
     Xtest  = feature_extraction(imgs_test)
 
     # FIXME: enjoy coding ...
+
+    # FIXME (Sheet 02): train the classifier
+    knnClassifier = KNNClassifier()
+    knnClassifier.fit(Xtrain, y)
+    resultTrain = [knnClassifier.predict(img) for img in Xtrain]
+    resultValid = [knnClassifier.predict(img) for img in Xvalid]
+    resultTest = [knnClassifier.predict(img) for img in Xtest]
+    
+    print('Train:', accuracy(ytrain, resultTrain))
+    print('Valid:', accuracy(yvalid, resultValid))
+    print('Test:', accuracy(ytest, resultTest))
