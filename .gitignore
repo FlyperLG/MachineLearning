@@ -5,6 +5,7 @@
 /2750
 /Sheet01/EuroSAT_RGB
 /Sheet01/Output
+*.ann
 
 # User-specific stuff
 .idea/**/workspace.xml
