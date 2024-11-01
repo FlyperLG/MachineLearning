@@ -206,7 +206,7 @@ def calculate_avg(imgs, categories):
 if __name__ == "__main__":
     # read dataset.
     # FIXME: replace BASE directory if needed
-    imgs, y = read_eurosat('EuroSAT_RGB', 200)
+    imgs, y = read_eurosat('EuroSAT_RGB', 4000)
     print('Read EUROSAT dataset with %d samples (images).' % len(imgs))
 
     print("\n")
