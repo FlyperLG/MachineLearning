@@ -4,6 +4,7 @@ from PIL import Image
 import numpy as np
 import random
 from annoy import AnnoyIndex
+from sklearn import svm
 
 
 # The classes (= types of landscape) in the EUROSAT dataset.
@@ -170,6 +171,7 @@ class KNNClassifier(Classifier):
         @type y: np.array (N, dtype=int)
         @param y: the class labels.
         '''
+        start_time = time.time()
         self.trainedModel = list(zip(X, y))
 
         tree = AnnoyIndex(len(X[0]), 'manhattan')
@@ -178,6 +180,10 @@ class KNNClassifier(Classifier):
             tree.add_item(i, v)
         tree.build(10)
         tree.save('knn.ann')
+
+        end_time = time.time()
+
+        print(f"Elapsed time training knn: {end_time - start_time} seconds")
 
         #distances = [[np.sum(abs(img1 - img2)) for img2 in X] for img1 in X]
         #print(distances)
@@ -208,11 +214,52 @@ class KNNClassifier(Classifier):
         return result[0][1]
         
 
+class SVMClassifier(Classifier):
+    trainedModel = []
+
+    # def __init__(self):
+    #     ''' constructor '''
+    #     self.trainedModel =
+
+    def fit(self, X, y):
+        '''
+        train the classifier and store the trained model as an attribute.
+
+        @type X: np.array (N x D, dtype=float)
+        @param X: the feature vectors to train on,
+                  each D-dimensional.
+
+        @type y: np.array (N, dtype=int)
+        @param y: the class labels.
+        '''
+        start_time = time.time()
+
+        self.trainedModel = svm.SVC(C=1, kernel='rbf', gamma='auto')
+
+        self.trainedModel.fit(X, y)
+        end_time = time.time()
+
+        print(f"Elapsed time training svm: {end_time - start_time} seconds")
+
+    def predict(self, x):
+        '''
+        apply the classifier to a new object.
+
+        @type x: np.array (D, dtype=float)
+        @param x: the feature vector to classify.
+
+        @rtype: int
+        @return: returns the predicted class.
+        '''
+        prediction = self.trainedModel.predict(x)
+        return prediction
+
+
 # main program
 if __name__ == "__main__":
 
     # read dataset.
-    imgs,y = read_eurosat('Sheet01/EuroSAT_RGB', 1000)
+    imgs,y = read_eurosat('../EuroSAT_RGB', 1000)
     print('Read EUROSAT dataset with %d samples (images).' %len(imgs))
 
     # FIXME (Sheet 02): split training+test data
@@ -225,12 +272,25 @@ if __name__ == "__main__":
     # FIXME: enjoy coding ...
 
     # FIXME (Sheet 02): train the classifier
-    knnClassifier = KNNClassifier()
-    knnClassifier.fit(Xtrain, y)
-    resultTrain = [knnClassifier.predict(img) for img in Xtrain]
-    resultValid = [knnClassifier.predict(img) for img in Xvalid]
-    resultTest = [knnClassifier.predict(img) for img in Xtest]
-    
-    print('Train:', accuracy(ytrain, resultTrain))
-    print('Valid:', accuracy(yvalid, resultValid))
-    print('Test:', accuracy(ytest, resultTest))
+    # knnClassifier = KNNClassifier()
+    # knnClassifier.fit(Xtrain, ytrain)
+    # resultTrainKnn = [knnClassifier.predict(img) for img in Xtrain]
+    # resultValidKnn = [knnClassifier.predict(img) for img in Xvalid]
+    # resultTestKnn = [knnClassifier.predict(img) for img in Xtest]
+    #
+    # print('KNN Train:', accuracy(ytrain, resultTrainKnn))
+    # print('KNN Valid:', accuracy(yvalid, resultValidKnn))
+    # print('KNN Test:', accuracy(ytest, resultTestKnn))
+
+    svmClassifier = SVMClassifier()
+    svmClassifier.fit(Xtrain, ytrain)
+
+    resultTrainSvm = svmClassifier.predict(Xtrain)
+    # resultValidSvm = [svmClassifier.predict(img) for img in Xvalid]
+    # resultTestSvm = [svmClassifier.predict(img) for img in Xtest]
+
+    print(resultTrainSvm)
+
+    print('SVM Train:', accuracy(ytrain, resultTrainSvm))
+    # print('SVM Valid:', accuracy(yvalid, resultValidSvm))
+    # print('SVM Test:', accuracy(ytest, resultTestSvm))
