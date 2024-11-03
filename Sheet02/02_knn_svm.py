@@ -234,7 +234,7 @@ class SVMClassifier(Classifier):
         '''
         start_time = time.time()
 
-        self.trainedModel = svm.SVC(C=1, kernel='rbf', gamma='auto')
+        self.trainedModel = svm.SVC(C=10, kernel='rbf', gamma='auto')
 
         self.trainedModel.fit(X, y)
         end_time = time.time()
@@ -251,8 +251,7 @@ class SVMClassifier(Classifier):
         @rtype: int
         @return: returns the predicted class.
         '''
-        prediction = self.trainedModel.predict(x)
-        return prediction
+        return self.trainedModel.predict([x])[0]
 
 
 # main program
@@ -272,25 +271,23 @@ if __name__ == "__main__":
     # FIXME: enjoy coding ...
 
     # FIXME (Sheet 02): train the classifier
-    # knnClassifier = KNNClassifier()
-    # knnClassifier.fit(Xtrain, ytrain)
-    # resultTrainKnn = [knnClassifier.predict(img) for img in Xtrain]
-    # resultValidKnn = [knnClassifier.predict(img) for img in Xvalid]
-    # resultTestKnn = [knnClassifier.predict(img) for img in Xtest]
-    #
-    # print('KNN Train:', accuracy(ytrain, resultTrainKnn))
-    # print('KNN Valid:', accuracy(yvalid, resultValidKnn))
-    # print('KNN Test:', accuracy(ytest, resultTestKnn))
+    knnClassifier = KNNClassifier()
+    knnClassifier.fit(Xtrain, ytrain)
+    resultTrainKnn = [knnClassifier.predict(img) for img in Xtrain]
+    resultValidKnn = [knnClassifier.predict(img) for img in Xvalid]
+    resultTestKnn = [knnClassifier.predict(img) for img in Xtest]
+
+    print('KNN Train:', accuracy(ytrain, resultTrainKnn))
+    print('KNN Valid:', accuracy(yvalid, resultValidKnn))
+    print('KNN Test:', accuracy(ytest, resultTestKnn))
 
     svmClassifier = SVMClassifier()
     svmClassifier.fit(Xtrain, ytrain)
 
-    resultTrainSvm = svmClassifier.predict(Xtrain)
-    # resultValidSvm = [svmClassifier.predict(img) for img in Xvalid]
-    # resultTestSvm = [svmClassifier.predict(img) for img in Xtest]
-
-    print(resultTrainSvm)
+    resultTrainSvm = [svmClassifier.predict(img) for img in Xtrain]
+    resultValidSvm = [svmClassifier.predict(img) for img in Xvalid]
+    resultTestSvm = [svmClassifier.predict(img) for img in Xtest]
 
     print('SVM Train:', accuracy(ytrain, resultTrainSvm))
-    # print('SVM Valid:', accuracy(yvalid, resultValidSvm))
-    # print('SVM Test:', accuracy(ytest, resultTestSvm))
+    print('SVM Valid:', accuracy(yvalid, resultValidSvm))
+    print('SVM Test:', accuracy(ytest, resultTestSvm))
