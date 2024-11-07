@@ -234,7 +234,14 @@ class SVMClassifier(Classifier):
         '''
         start_time = time.time()
 
-        self.trainedModel = svm.SVC(C=10, kernel='rbf', gamma='auto')
+        subset_size = 500
+        indices = np.random.choice(len(X), subset_size, replace=False)
+        X_subset = X[indices]
+        gamma = np.sum((X_subset[:, np.newaxis] - X_subset) ** 2)
+        gamma = 1 / (gamma / (subset_size ** 2))
+        print("Gamma: ", gamma)
+
+        self.trainedModel = svm.SVC(C=1, kernel='rbf', gamma=gamma)
 
         self.trainedModel.fit(X, y)
         end_time = time.time()
@@ -258,7 +265,7 @@ class SVMClassifier(Classifier):
 if __name__ == "__main__":
 
     # read dataset.
-    imgs,y = read_eurosat('../EuroSAT_RGB', 1000)
+    imgs,y = read_eurosat('Sheet01/EuroSAT_RGB', 500)
     print('Read EUROSAT dataset with %d samples (images).' %len(imgs))
 
     # FIXME (Sheet 02): split training+test data
@@ -280,6 +287,7 @@ if __name__ == "__main__":
     print('KNN Train:', accuracy(ytrain, resultTrainKnn))
     print('KNN Valid:', accuracy(yvalid, resultValidKnn))
     print('KNN Test:', accuracy(ytest, resultTestKnn))
+    print()
 
     svmClassifier = SVMClassifier()
     svmClassifier.fit(Xtrain, ytrain)
