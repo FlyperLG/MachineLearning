@@ -221,7 +221,7 @@ class SVMClassifier(Classifier):
     #     ''' constructor '''
     #     self.trainedModel =
 
-    def fit(self, X, y):
+    def fit(self, X, y, C = 1):
         '''
         train the classifier and store the trained model as an attribute.
 
@@ -241,7 +241,7 @@ class SVMClassifier(Classifier):
         gamma = 1 / (gamma / (subset_size ** 2))
         print("Gamma: ", gamma)
 
-        self.trainedModel = svm.SVC(C=1, kernel='rbf', gamma=gamma)
+        self.trainedModel = svm.SVC(C=C, kernel='rbf', gamma=gamma)
 
         self.trainedModel.fit(X, y)
         end_time = time.time()
@@ -260,6 +260,47 @@ class SVMClassifier(Classifier):
         '''
         return self.trainedModel.predict([x])[0]
 
+def train_classifier(Xtrain, ytrain, Xtest, ytest):
+    knnClassifier = KNNClassifier()
+    knnClassifier.fit(Xtrain, ytrain)
+    resultTrainKnn = [knnClassifier.predict(img) for img in Xtrain]
+    resultTestKnn = [knnClassifier.predict(img) for img in Xtest]
+
+    print('KNN Train:', accuracy(ytrain, resultTrainKnn))
+    print('KNN Test:', accuracy(ytest, resultTestKnn))
+    print()
+
+    svmClassifier = SVMClassifier()
+    svmClassifier.fit(Xtrain, ytrain)
+
+    resultTrainSvm = [svmClassifier.predict(img) for img in Xtrain]
+    resultTestSvm = [svmClassifier.predict(img) for img in Xtest]
+
+    print('SVM Train:', accuracy(ytrain, resultTrainSvm))
+    print('SVM Test:', accuracy(ytest, resultTestSvm))
+
+def grid_seaarch_knn(Xtrain, ytrain, Xvalid, yvalid):
+    knnClassifier = KNNClassifier()
+    knnClassifier.fit(Xtrain, ytrain); 
+
+    knnResultDict = dict()
+    k = 1
+    for i in range(0, 20):
+        resultValidKnn = [knnClassifier.predict(img, k) for img in Xvalid]
+        knnResultDict[k] = accuracy(yvalid, resultValidKnn)
+        k+=2
+    return knnResultDict
+
+def grid_seaarch_svm(Xtrain, ytrain, Xvalid, yvalid):
+    svmClassifier = SVMClassifier()
+    svmResultDict = dict()
+    C = 1/10000
+    for i in range(0, 15):
+        svmClassifier.fit(Xtrain, ytrain, C)
+        resultValidSvm = [svmClassifier.predict(img) for img in Xvalid]
+        svmResultDict[C] = accuracy(yvalid, resultValidSvm)
+        C *= 10
+    return svmResultDict
 
 # main program
 if __name__ == "__main__":
@@ -278,24 +319,6 @@ if __name__ == "__main__":
     # FIXME: enjoy coding ...
 
     # FIXME (Sheet 02): train the classifier
-    knnClassifier = KNNClassifier()
-    knnClassifier.fit(Xtrain, ytrain)
-    resultTrainKnn = [knnClassifier.predict(img) for img in Xtrain]
-    resultValidKnn = [knnClassifier.predict(img) for img in Xvalid]
-    resultTestKnn = [knnClassifier.predict(img) for img in Xtest]
-
-    print('KNN Train:', accuracy(ytrain, resultTrainKnn))
-    print('KNN Valid:', accuracy(yvalid, resultValidKnn))
-    print('KNN Test:', accuracy(ytest, resultTestKnn))
-    print()
-
-    svmClassifier = SVMClassifier()
-    svmClassifier.fit(Xtrain, ytrain)
-
-    resultTrainSvm = [svmClassifier.predict(img) for img in Xtrain]
-    resultValidSvm = [svmClassifier.predict(img) for img in Xvalid]
-    resultTestSvm = [svmClassifier.predict(img) for img in Xtest]
-
-    print('SVM Train:', accuracy(ytrain, resultTrainSvm))
-    print('SVM Valid:', accuracy(yvalid, resultValidSvm))
-    print('SVM Test:', accuracy(ytest, resultTestSvm))
+    # result = grid_seaarch_svm(Xtrain, ytrain, Xvalid, yvalid)
+    result = grid_seaarch_knn(Xtrain, ytrain, Xvalid, yvalid)
+    print(result)
