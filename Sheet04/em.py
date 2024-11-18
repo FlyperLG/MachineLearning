@@ -72,10 +72,6 @@ class ExpectationMaximization:
         '''
 
         (K, priors, means, vars) = model
-        print("Priors", priors)
-        print("Means", means)
-        print("Vars", vars)
-        print()
         result = []
         for point in X:
             probabilities = []
@@ -101,6 +97,7 @@ class ExpectationMaximization:
             for k in range(0, K):
                 # Get Dimensions
                 dimension = len(point)
+
                 # Calculate variance
                 variances = np.zeros((dimension, dimension))
                 np.fill_diagonal(variances, vars[k])
