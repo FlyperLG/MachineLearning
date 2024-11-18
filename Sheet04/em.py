@@ -70,7 +70,47 @@ class ExpectationMaximization:
         @rtype: np.array
         @return: the probabilities/weights w(ik) = P(k|x,Theta), in an N x K array.
         '''
-        raise NotImplementedError() # FIXME: implement
+
+        (K, priors, means, vars) = model
+        print("Priors", priors)
+        print("Means", means)
+        print("Vars", vars)
+        print()
+        result = []
+        for point in X:
+            probabilities = []
+            for k in range(0, K):
+                # Get Dimensions
+                dimension = len(point)
+                # Calculate variance
+                variances = np.zeros((dimension, dimension))
+                np.fill_diagonal(variances, vars[k])
+
+                prob = priors[k] * mvnormal.pdf(point, means[k], variances)
+                probabilities.append(prob)
+            sumProbabilities = np.sum(probabilities)
+            result.append(probabilities/sumProbabilities)
+        
+        return result
+    
+    def own_multivariate_normal(X, model):
+        (K, priors, means, vars) = model
+        result = []
+        for point in X:
+            probabilities = []
+            for k in range(0, K):
+                # Get Dimensions
+                dimension = len(point)
+                # Calculate variance
+                variances = np.zeros((dimension, dimension))
+                np.fill_diagonal(variances, vars[k])
+
+                normalizationFactor = (1 / (((2 * np.pi) ** (dimension/2)) * (np.linalg.det(variances) ** (1/2))))
+                prob = normalizationFactor * np.exp(-1/2 * np.dot(np.dot((point-means[k]).T, np.linalg.inv(variances)), (point-means[k])))
+                probabilities.append(prob)
+            result.append(probabilities)
+        return result
+                
 
     def _M(self, P, X, K):
         '''
@@ -81,8 +121,21 @@ class ExpectationMaximization:
         @rtype: tuple
         @return: a new (priors,means,vars).
         '''
-        raise NotImplementedError() # FIXME: implement
 
+        nk = np.sum(P, axis=0)
+        priors = nk / len(X)
+
+        means = []
+        for k in range(0, K):
+            means.append((1 / nk[k]) * np.sum([P[index][k] * point for index, point in enumerate(X)], axis=0))
+
+        epsilon = 0.01
+        vars = []
+        for k in range(0, K):
+            var = (1 / nk[k]) * np.sum([P[index][k] * ((point - means[k]).T * (point - means[k])) for index, point in enumerate(X)], axis=0)
+            var[var < epsilon] = epsilon
+            vars.append(var)
+        return (priors, means, vars)
 
     def train(self, X, K):
         '''
@@ -101,9 +154,10 @@ class ExpectationMaximization:
         self.model = model = (K, priors, means, vars) = self._initialize(X, K)  # K x D
 
         for i in range(self.iterations):
-
-            raise NotImplementedError()  # FIXME: implement
-
+            probability = self._E(X, model)
+            (newPriors, newMeans, newVars) = self._M(probability, X, K)
+            model = (K, newPriors, newMeans, newVars)
+        self.model = model
         return model
 
 
@@ -128,7 +182,7 @@ class ExpectationMaximization:
 
 
 
-    def train(self, X, minK=2, maxK=20, plotpath="plot.pdf"):
+    def train_visualize(self, X, K, plotpath="plot"):
         """
         runs an EM clustering on a given set of samples / features.
 
@@ -146,7 +200,16 @@ class ExpectationMaximization:
         @type plotpath: string (or NoneType)
         @param plotpath: the path to save the plot to (don't plot if None).
         """
-        raise NotImplementedError() # FIXME: implement
+        # FIXME: implement
+        self.model = model = (K, priors, means, vars) = self._initialize(X, K)  # K x D
+
+        for i in range(self.iterations):
+            probability = self._E(X, model)
+            (newPriors, newMeans, newVars) = self._M(probability, X, K)
+            model = (K, newPriors, newMeans, newVars)
+            misc.plot(X, model, f"{plotpath}{i}")
+        self.model = model
+        return model
 
 
     def apply(self, X):
@@ -238,10 +301,11 @@ class KeyframeExtractor:
 if __name__ == "__main__":
 
     # Exercise 1
-    X = test.testdata3()
+    X = test.testdata1()
     em = ExpectationMaximization(iterations=30)
+    #em.train_visualize(X, K=3, plotpath="Output/visualize")
     model = em.train(X, K=3)
-    print(model)
+    misc.plot(X, model, "Output/result")
 
     # Exercise 2 (video keyframes)
     '''
