@@ -7,6 +7,7 @@ import test
 import numpy as np
 import time
 import cv2
+from PIL import Image
 from scipy.stats import multivariate_normal as mvnormal
 from sklearn.decomposition import PCA
 
@@ -72,6 +73,7 @@ class ExpectationMaximization:
         '''
 
         (K, priors, means, vars) = model
+        print(vars)
         result = []
         for point in X:
             probabilities = []
@@ -91,6 +93,7 @@ class ExpectationMaximization:
     
     def own_multivariate_normal(X, model):
         (K, priors, means, vars) = model
+        
         result = []
         for point in X:
             probabilities = []
@@ -221,7 +224,27 @@ class ExpectationMaximization:
                  1. the indices of the best-matching sample per cluster
                  2. a KxD-dimensional array containing the corresponding feature vectors
         """
-        raise NotImplementedError() # FIXME: implement
+        (K, priors, means, vars) = self.model
+        result = []
+        for k in range(K):
+            bestPosition = []
+            bestProb = 0
+            for x in X:
+                # Get Dimensions
+                dimension = len(x)
+                # Calculate variance
+                variances = np.zeros((dimension, dimension))
+                np.fill_diagonal(variances, vars[k])
+
+                prob = mvnormal.pdf(x, means[k], variances)
+                if(prob > bestProb):
+                    bestProb = prob
+                    bestPosition = x
+            result.append(bestPosition)
+        return result
+            
+
+
 
 
 
@@ -292,21 +315,45 @@ class KeyframeExtractor:
         implement this method to extract a set of 'good' keyframes
         from a video file.
         '''
-        raise NotImplementedError() # FIXME: implement
+        return self.video2features(filename)
 
         
 if __name__ == "__main__":
 
     # Exercise 1
-    X = test.testdata1()
-    em = ExpectationMaximization(iterations=30)
+    #X = test.testdata3()
+    #em = ExpectationMaximization(iterations=30)
     #em.train_visualize(X, K=3, plotpath="Output/visualize")
-    model = em.train(X, K=3)
-    misc.plot(X, model, "Output/result")
+    #model = em.train(X, K=3)
+    #misc.plot(X, model, "Output/result")
 
     # Exercise 2 (video keyframes)
-    '''
-    em = ExpectationMaximization()
+    
+    em = ExpectationMaximization(100)
     kf = KeyframeExtractor(em, framestep=3, dpca=2)
-    kf.extract_keyframes("vids/got.mp4")
-    '''
+    gotX, gotImgs = kf.extract_keyframes("vids/got.mp4")    
+    model = em.train(gotX, 5)
+    misc.plot(gotX, model, "Output/video_result")
+
+    gotResult = em.apply(gotX)
+    print("GotResult:", gotResult)
+    for result in gotResult:
+        i, j = np.where(gotX == result)[0]        
+        newImage = Image.fromarray(gotImgs[i])
+        newImage.save(f"Output/got/frame_{i}.png")
+    
+    broX, broImgs = kf.extract_keyframes("vids/99.mp4")
+    broResult = em.apply(broX)
+    print("BroResult:", broResult)
+    for result in broResult:
+        i, j = np.where(broX == result)[0]        
+        newImage = Image.fromarray(broImgs[i])
+        newImage.save(f"Output/bro/frame_{i}.png")
+
+    lwtX, lwtImgs = kf.extract_keyframes("vids/lwt.mp4")
+    lwtResult = em.apply(lwtX)
+    print("LwtResult:", lwtResult)
+    for result in lwtResult:
+        i, j = np.where(lwtX == result)[0]        
+        newImage = Image.fromarray(lwtImgs[i])
+        newImage.save(f"Output/lwt/frame_{i}.png")
