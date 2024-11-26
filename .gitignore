@@ -7,6 +7,7 @@
 Output
 /Sheet04/vids
 *.ann
+/Sheet06/data
 
 # User-specific stuff
 .idea/**/workspace.xml
