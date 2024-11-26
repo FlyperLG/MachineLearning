@@ -321,11 +321,11 @@ class KeyframeExtractor:
 if __name__ == "__main__":
 
     # Exercise 1
-    #X = test.testdata3()
-    #em = ExpectationMaximization(iterations=30)
-    #em.train_visualize(X, K=3, plotpath="Output/visualize")
-    #model = em.train(X, K=3)
-    #misc.plot(X, model, "Output/result")
+    X = test.testdata3()
+    em = ExpectationMaximization(iterations=30)
+    em.train_visualize(X, K=3, plotpath="Output/visualize")
+    model = em.train(X, K=3)
+    misc.plot(X, model, "Output/result")
 
     # Exercise 2 (video keyframes)
     

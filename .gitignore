@@ -8,6 +8,8 @@ Output
 /Sheet04/vids
 *.ann
 /Sheet06/data
+/Sheet06/wandb
+/*/__pycache__
 
 # User-specific stuff
 .idea/**/workspace.xml
