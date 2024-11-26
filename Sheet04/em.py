@@ -339,7 +339,7 @@ if __name__ == "__main__":
     print("GotResult:", gotResult)
     for result in gotResult:
         i, j = np.where(gotX == result)[0]        
-        newImage = Image.fromarray(gotImgs[i])
+        newImage = Image.fromarray(cv2.cvtColor(gotImgs[i], cv2.COLOR_BGR2RGB))
         newImage.save(f"Output/got/frame_{i}.png")
     
     broX, broImgs = kf.extract_keyframes("vids/99.mp4")
@@ -347,7 +347,7 @@ if __name__ == "__main__":
     print("BroResult:", broResult)
     for result in broResult:
         i, j = np.where(broX == result)[0]        
-        newImage = Image.fromarray(broImgs[i])
+        newImage = Image.fromarray(cv2.cvtColor(broImgs[i], cv2.COLOR_BGR2RGB))
         newImage.save(f"Output/bro/frame_{i}.png")
 
     lwtX, lwtImgs = kf.extract_keyframes("vids/lwt.mp4")
@@ -355,5 +355,5 @@ if __name__ == "__main__":
     print("LwtResult:", lwtResult)
     for result in lwtResult:
         i, j = np.where(lwtX == result)[0]        
-        newImage = Image.fromarray(lwtImgs[i])
+        newImage = Image.fromarray(cv2.cvtColor(lwtImgs[i], cv2.COLOR_BGR2RGB))
         newImage.save(f"Output/lwt/frame_{i}.png")
