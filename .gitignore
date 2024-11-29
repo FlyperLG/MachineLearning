@@ -11,6 +11,9 @@ Output
 /Sheet06/wandb
 /*/__pycache__
 
+*.pkl
+*.pt
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
