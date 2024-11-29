@@ -143,10 +143,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    with open('recipes.json') as stream:
+    with open('./data/recipes-1000.json') as stream:
         docs_all = json.load(stream)
         docs = [d['instructions'] for d in docs_all]
-    
+
+    print(args.train)
+
     if args.train:
 
         voc = Vocabulary(min_occurrences=MIN_OCCURRENCES)
@@ -158,7 +160,7 @@ if __name__ == "__main__":
 
 
     if args.apply:
-        
+
         voc = Vocabulary(min_occurrences=MIN_OCCURRENCES)
         voc.load(VOC_PATH)
 
@@ -169,7 +171,7 @@ if __name__ == "__main__":
             print('--------------------')
             print(doc)
             print()
-            
+
             print('--------------------')
             print('DOCUMENT MAPPED TO TOKENS')
             print('--------------------')

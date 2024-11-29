@@ -17,13 +17,13 @@ wandb.init(project='w2v')
 
 ''' Dataset Parameters '''
 #### small dataset
-#DOCSPATH = 'recipes-1000.json' # small dataset?
-#MIN_OCCURRENCES = 30
-#NDOCS = 1000
+DOCSPATH = './data/recipes-1000.json' # small dataset?
+MIN_OCCURRENCES = 30
+NDOCS = 1000
 #### large dataset
-DOCSPATH = 'recipes.json'
-MIN_OCCURRENCES = 80
-NDOCS = 300000
+# DOCSPATH = './data/recipes.json'
+# MIN_OCCURRENCES = 80
+# NDOCS = 300000
 WINDOWSIZE = 2
 
 ''' Model Parameters '''
@@ -40,7 +40,10 @@ class W2VNet(nn.Module):
         super(W2VNet, self).__init__()
 
         self.U = torch.nn.Embedding(len(voc), D)
-        raise NotImplementedError()
+        self.V = torch.nn.Embedding(len(voc), D)
+
+        nn.init.uniform_(self.U.weight, -1. / D, 1. / D)
+        nn.init.uniform_(self.V.weight, -1. / D, 1. / D)
         
                     
     def forward(self, X):
@@ -49,7 +52,18 @@ class W2VNet(nn.Module):
         this should return the probabilies P(t|t') 
         for each pair (t,t'). 
         '''
-        raise NotImplementedError()
+        print("X: ", X)
+        print("U: ",self.U)
+
+
+        # maybe think about it
+        u = self.U(X[0])
+        v = self.V(X[1])
+
+        dot_products = torch.bmm(u, v)
+
+        probabilities = torch.sigmoid(dot_products)
+        return probabilities
 
     def forward_doc(self, doc):
         '''
@@ -170,20 +184,33 @@ def train_and_save_vocabulary():
 
 
 def run_training(voc, dataset, trial=None):
-    
+
+    learning_rate = 0.001
+
     dataloader = DataLoader(dataset,
                             batch_size=BATCHSIZE,
                             shuffle=True)
+
+    net = W2VNet(D=D, voc=voc)
+
+    optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
+    bce_loss = torch.nn.BCELoss()
 
     for epoch in range(EPOCHS):
 
         # store a checkpoint of the model
         torch.save(net.state_dict(), MODELPATH)
 
-        for i, batch in enumerate(dataloader):
-            
-            # FIXME
-            pass
+        for (i, batch) in enumerate(dataloader):
+            optimizer.zero_grad()
+
+            prob = net.forward(batch)
+
+            loss = bce_loss(prob, batch)
+            loss.backward()
+            optimizer.step()
+
+            print(f'Epoch [{epoch + 1}/{EPOCHS}], Loss: {loss.item()}')
 
     print('Finished Training')
 
@@ -221,7 +248,7 @@ if __name__ == "__main__":
         voc = train_and_save_vocabulary()
         print('done.')
 
-        net = W2VNet(D=D, voc=voc)
+        net = W2VNet(D=1, voc=voc)
 
         net.load_state_dict(torch.load(MODELPATH))
 
