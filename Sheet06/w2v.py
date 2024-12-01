@@ -1,6 +1,6 @@
 from voc import Vocabulary
 from torch.utils.data import Dataset, DataLoader
-import wandb
+#import wandb
 import json
 import numpy as np
 import argparse
@@ -12,7 +12,7 @@ import os
 
 
 # setup wandb logging
-wandb.init(project='w2v')
+#wandb.init(project='w2v')
 
 
 ''' Dataset Parameters '''
@@ -52,15 +52,15 @@ class W2VNet(nn.Module):
         this should return the probabilies P(t|t') 
         for each pair (t,t'). 
         '''
-        print("X: ", X)
-        print("U: ",self.U)
-
 
         # maybe think about it
-        u = self.U(X[0])
-        v = self.V(X[1])
+        u = self.U(X[:, 0])
+        v = self.V(X[:, 1])
+        print(u.shape)
+        print(v.shape)
 
-        dot_products = torch.bmm(u, v)
+        dot_products = torch.matmul(u, v.t())
+        print(dot_products)
 
         probabilities = torch.sigmoid(dot_products)
         return probabilities
@@ -202,10 +202,9 @@ def run_training(voc, dataset, trial=None):
         torch.save(net.state_dict(), MODELPATH)
 
         for (i, batch) in enumerate(dataloader):
+            X, y = batch
             optimizer.zero_grad()
-
-            prob = net.forward(batch)
-
+            prob = net.forward(X.view(-1, 2))
             loss = bce_loss(prob, batch)
             loss.backward()
             optimizer.step()
