@@ -27,12 +27,12 @@ NDOCS = 1000
 WINDOWSIZE = 2
 
 ''' Model Parameters '''
-MODELPATH = 'model.pt'
+MODELPATH = './model.pt'
 D = 300                    # embedding dimension
-BATCHSIZE = 100
+BATCHSIZE = 75
 EPOCHS = 30
 
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class W2VNet(nn.Module):
 
@@ -54,15 +54,15 @@ class W2VNet(nn.Module):
         '''
 
         # maybe think about it
-        u = self.U(X[:, 0])
-        v = self.V(X[:, 1])
-        print(u.shape)
-        print(v.shape)
+        u = self.U(X[:, 0]).to(device)
+        v = self.V(X[:, 1]).to(device)
 
-        dot_products = torch.matmul(u, v.t())
-        print(dot_products)
+        u2 = torch.unsqueeze(u, 1)
+        v2 = torch.unsqueeze(v, 2)
 
+        dot_products = torch.bmm(u2, v2).flatten()
         probabilities = torch.sigmoid(dot_products)
+
         return probabilities
 
     def forward_doc(self, doc):
@@ -191,7 +191,7 @@ def run_training(voc, dataset, trial=None):
                             batch_size=BATCHSIZE,
                             shuffle=True)
 
-    net = W2VNet(D=D, voc=voc)
+    net = W2VNet(D=D, voc=voc).to(device)
 
     optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
     bce_loss = torch.nn.BCELoss()
@@ -203,14 +203,20 @@ def run_training(voc, dataset, trial=None):
 
         for (i, batch) in enumerate(dataloader):
             X, y = batch
+            X, y = X.to(device), y.to(device)
             optimizer.zero_grad()
             prob = net.forward(X.view(-1, 2))
-            loss = bce_loss(prob, batch)
+            loss = bce_loss(prob, y.flatten())
             loss.backward()
             optimizer.step()
 
             print(f'Epoch [{epoch + 1}/{EPOCHS}], Loss: {loss.item()}')
+        emb_u = net.U.weight.cpu().detach().numpy()
+        #emb_v = net.V.weight.cpu().detach().numpy()
+        pickle_data = (emb_u, voc)
 
+        with open (f'results/result_epoch_{epoch+1}.pkl', 'wb') as f:
+            pickle.dump(pickle_data, f)
     print('Finished Training')
 
 
@@ -247,7 +253,7 @@ if __name__ == "__main__":
         voc = train_and_save_vocabulary()
         print('done.')
 
-        net = W2VNet(D=1, voc=voc)
+        net = W2VNet(D=D, voc=voc).to(device)
 
         net.load_state_dict(torch.load(MODELPATH))
 
