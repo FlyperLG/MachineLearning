@@ -2,6 +2,7 @@ import pickle
 import sys
 import numpy as np
 import pandas as pd
+import torch
 from umap import UMAP
 import plotly.express as px
 
@@ -15,6 +16,7 @@ if len(sys.argv) < 1:
 with open(sys.argv[1], 'rb') as stream:
     emb,voc = pickle.load(stream)
 
+emb = torch.tensor(emb)
 N,D = emb.shape
 emb = emb.detach().numpy()
 labels = [voc.id2token[i] for i in range(N)]

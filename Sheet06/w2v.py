@@ -1,6 +1,9 @@
+from annoy.annoylib import Annoy
+from sympy import closest_points
+
 from voc import Vocabulary
 from torch.utils.data import Dataset, DataLoader
-#import wandb
+import wandb
 import json
 import numpy as np
 import argparse
@@ -9,10 +12,11 @@ import random
 import torch.nn as nn
 import pickle
 import os
+import annoy
 
 
 # setup wandb logging
-#wandb.init(project='w2v')
+wandb.init(project='w2v')
 
 
 ''' Dataset Parameters '''
@@ -29,7 +33,7 @@ WINDOWSIZE = 2
 ''' Model Parameters '''
 MODELPATH = './model.pt'
 D = 300                    # embedding dimension
-BATCHSIZE = 75
+BATCHSIZE = 100
 EPOCHS = 30
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -39,8 +43,8 @@ class W2VNet(nn.Module):
     def __init__(self, D, voc):
         super(W2VNet, self).__init__()
 
-        self.U = torch.nn.Embedding(len(voc), D)
-        self.V = torch.nn.Embedding(len(voc), D)
+        self.U = torch.nn.Embedding(len(voc), D).to(device)
+        self.V = torch.nn.Embedding(len(voc), D).to(device)
 
         nn.init.uniform_(self.U.weight, -1. / D, 1. / D)
         nn.init.uniform_(self.V.weight, -1. / D, 1. / D)
@@ -70,8 +74,16 @@ class W2VNet(nn.Module):
         use for the last exercise, to get an embedding
         for a whole document/recipe.
         '''
-        raise NotImplementedError()
-    
+
+        doc = torch.tensor(doc).to(device)
+
+        u_embedding = self.U(doc).to(device)
+        v_embedding = self.V(doc).to(device)
+
+        avg_emb = torch.cat((u_embedding, v_embedding), 0)
+
+        return torch.mean(avg_emb, dim=0)
+
 
     
 class W2VDataset(Dataset):
@@ -211,9 +223,9 @@ def run_training(voc, dataset, trial=None):
             optimizer.step()
 
             print(f'Epoch [{epoch + 1}/{EPOCHS}], Loss: {loss.item()}')
-        emb_u = net.U.weight.cpu().detach().numpy()
-        #emb_v = net.V.weight.cpu().detach().numpy()
-        pickle_data = (emb_u, voc)
+        emb = net.U.weight.cpu().detach().numpy()
+
+        pickle_data = (emb, voc)
 
         with open (f'results/result_epoch_{epoch+1}.pkl', 'wb') as f:
             pickle.dump(pickle_data, f)
@@ -242,7 +254,7 @@ if __name__ == "__main__":
 
         print('training...')
         run_training(voc, dataset)
-        
+
     if args.apply:
 
         with open(DOCSPATH) as stream:
@@ -257,4 +269,23 @@ if __name__ == "__main__":
 
         net.load_state_dict(torch.load(MODELPATH))
 
-        raise NotImplementedError()
+        embs = []
+        for doc in docs:
+            tokenize = np.array(voc.apply(doc))
+            tokenize = tokenize[tokenize != 0]
+
+            emb = net.forward_doc(tokenize).cpu().detach().numpy()
+            embs.append(emb)
+
+        embs = np.array(embs)
+        annoy_index = annoy.AnnoyIndex(len(embs[0]), 'euclidean')
+
+        for i, emb in enumerate(embs):
+            annoy_index.add_item(i, emb)
+
+        annoy_index.build(10)
+        print(docs_all[500]['name'])
+
+        for i, emb in enumerate(embs):
+            closest_indices = annoy_index.get_nns_by_vector(emb, 5)
+            print(f"Recipe {docs_all[i]['name']} is similar to recipes {', '.join(map(str, [{docs_all[index]['name']} for index in closest_indices]))}")
