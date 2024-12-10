@@ -1,3 +1,5 @@
+import time
+
 from annoy.annoylib import Annoy
 from sympy import closest_points
 
@@ -16,27 +18,28 @@ import annoy
 
 
 # setup wandb logging
-wandb.init(project='w2v')
 
 
 ''' Dataset Parameters '''
 #### small dataset
-DOCSPATH = './data/recipes-1000.json' # small dataset?
-MIN_OCCURRENCES = 30
-NDOCS = 1000
+# DOCSPATH = './data/recipes-1000.json' # small dataset?
+# MIN_OCCURRENCES = 30
+# NDOCS = 1000
 #### large dataset
-# DOCSPATH = './data/recipes.json'
-# MIN_OCCURRENCES = 80
-# NDOCS = 300000
+DOCSPATH = './data/recipes.json'
+MIN_OCCURRENCES = 80
+NDOCS = 300000
 WINDOWSIZE = 2
 
 ''' Model Parameters '''
 MODELPATH = './model.pt'
 D = 300                    # embedding dimension
-BATCHSIZE = 100
+BATCHSIZE = 2000
 EPOCHS = 30
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 
 class W2VNet(nn.Module):
 
@@ -199,9 +202,12 @@ def run_training(voc, dataset, trial=None):
 
     learning_rate = 0.001
 
+    wandb.config.learning_rate = learning_rate
+
     dataloader = DataLoader(dataset,
                             batch_size=BATCHSIZE,
-                            shuffle=True)
+                            shuffle=True,
+                            num_workers=8)
 
     net = W2VNet(D=D, voc=voc).to(device)
 
@@ -209,7 +215,7 @@ def run_training(voc, dataset, trial=None):
     bce_loss = torch.nn.BCELoss()
 
     for epoch in range(EPOCHS):
-
+        start_time = time.time()
         # store a checkpoint of the model
         torch.save(net.state_dict(), MODELPATH)
 
@@ -222,19 +228,29 @@ def run_training(voc, dataset, trial=None):
             loss.backward()
             optimizer.step()
 
-            print(f'Epoch [{epoch + 1}/{EPOCHS}], Loss: {loss.item()}')
-        emb = net.U.weight.cpu().detach().numpy()
+            wandb.log({'loss': loss.item(),
+                       'epoch': epoch+1,})
 
-        pickle_data = (emb, voc)
+        end_time = time.time()
+        print('Time for one epoch: ', end_time-start_time)
+        print(f'Epoch [{epoch + 1}/{EPOCHS}], Loss: {loss.item()}')
 
-        with open (f'results/result_epoch_{epoch+1}.pkl', 'wb') as f:
-            pickle.dump(pickle_data, f)
+    emb = net.U.weight.cpu().detach().numpy()
+
+    pickle_data = (emb, voc)
+
+    with open (f'results/result_epoch_{epoch+1}.pkl', 'wb') as f:
+        pickle.dump(pickle_data, f)
     print('Finished Training')
 
 
 
     
 if __name__ == "__main__":
+
+    wandb.init(project='w2v')
+    wandb.config.epochs = EPOCHS
+    wandb.config.batch_size = BATCHSIZE
 
     # parse command line arguments (no need to touch)
     parser = argparse.ArgumentParser(description='word2vec on chefkoch.de recipes.')
