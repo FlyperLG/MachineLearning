@@ -10,6 +10,9 @@ Output
 /Sheet06/data
 /Sheet06/wandb
 /*/__pycache__
+Sheet07/*.json
+Sheet08/data_greedy
+Sheet08/data_multinomial
 
 *.pkl
 *.pt
