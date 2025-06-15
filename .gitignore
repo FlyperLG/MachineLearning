@@ -13,6 +13,11 @@ Output
 /Sheet07/data
 /Sheet08/data_greedy
 /Sheet08/data_multinomial
+=======
+Sheet07/*.json
+Sheet08/data_greedy
+Sheet08/data_multinomial
+>>>>>>> c76e5f2bf8e771e2217b72499ba75feebb66d759
 
 *.pkl
 *.pt

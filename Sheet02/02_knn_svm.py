@@ -231,7 +231,7 @@ class SVMClassifier(Classifier):
 
         @type y: np.array (N, dtype=int)
         @param y: the class labels.
-        '''
+        ''',
         start_time = time.time()
 
         subset_size = 500
